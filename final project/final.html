@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>Final Project</title>
+<script>
+var canvas;
+var ctx;
+var width = 500;
+var height = 500;
+var size = 250;
+var time = 0;
+var fqc = 20;
+
+function init(){
+  if (location.hash)fqc = 5;
+  canvas = document.getElementById("canvas");
+  ctx = canvas.getContext("2d");
+  drawLines();
+}
+
+function drawLines() {
+  ctx.fillRect(0,0,width,height);
+  ctx.translate(width/2,height/2);
+  for (var i = 0; i < 25; i++) {
+    for (var a = -45; a <= 45; a+=fqc) {
+      setTimeout("drawTime("+a+");",100 * time);
+      time++;
+    }
+  }
+}
+function drawTime(a){
+  ctx.beginPath();
+  ctx.moveTo(0,size);
+  var radius = Math.PI/180*a;
+  var x = (size * Math.sin(radius)) / Math.sin(Math.PI/2 - radius);
+  ctx.lineTo(x,0);
+
+  if (Math.abs(a) == 45) {
+    ctx.strokeStyle="rgb(255,255,255)";
+    ctx.lineWidth=1;
+  }  
+  else {
+    ctx.strokeStyle="rgb(110,110,110)";
+    ctx.lineWidth=0.35;
+  }
+  ctx.stroke();
+  ctx.rotate((Math.PI/180)*15);
+}
+
+</script>
+</head>
+<h1>Computer Graphics Final Project</h1>
+<p>This is an animation of approximating circles in a 2D canvas by drawing straight lines which will also generate some cool patterns.</p>
+<body onload="init();">
+<canvas id="canvas" width="500" height="500"></canvas>
+</body>
+</html>

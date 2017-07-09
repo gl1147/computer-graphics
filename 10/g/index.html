@@ -1,0 +1,121 @@
+<script src=M.js></script>
+<script src=lib2g.js></script>
+
+
+
+
+<body bgcolor=black text=white>
+<center>
+<canvas id='canvas1' width=600 height=600></canvas>
+</center>
+</body>
+
+<script id='vs_script' type='x-shader/x-vertex'>
+   attribute vec3 aPos, aNor;
+   varying   vec3 vPos, vNor;
+   uniform   mat4 matrix, invMatrix;
+   void main() {
+      vec4 pos = matrix * vec4(aPos, 1.);
+      vec4 nor = vec4(aNor, 0.) * invMatrix;
+
+// dot(nor, pos);
+// dot(nor * invMatrix, matrix * pos);
+// nor . invMatrix . matrix . pos
+// nor . (invMatrix . matrix) . pos
+// nor . pos
+
+      gl_Position = pos;
+      vPos = pos.xyz;
+      vNor = nor.xyz;
+   }
+</script>
+
+<script id='fs_script' type='x-shader/x-fragment'>
+varying vec3 vPos, vNor;
+vec3 LDir = normalize(vec3(1,1,1));           // Light direction
+
+
+
+void main() {
+  vec3 normal = normalize(vNor);
+  vec3 c = normal * .5 + .5;
+  
+
+
+vec3 V = vec3(0.,0.,0.);                      // Ray origin
+vec3 W = normalize(vec3(vPos.xy, -3.));       // Ray direction
+vec3 E = -W;                                  //direction to eye
+
+vec3 A = vec3(.01,.1,.01);
+vec3 D = vec3(.05,.5,.05);
+vec4 S = vec4(.5,.5,.5,10.);
+
+vec3 a = A;                                // Ambient color
+
+float d = max(0., dot(c, LDir));           // Diffuse value
+vec3 R = 2. * dot(c, LDir) * c - LDir;     // Reflection dir
+float s = pow(max(0., dot(E, R)), 10.);    // Specular value
+c = a + d * D + s ;
+
+gl_FragColor = vec4(sqrt(c), 1.);
+}
+
+
+</script>
+   
+<script>
+
+
+var m = M.identityMatrix();
+
+var vs = vs_script.innerHTML, fs = fs_script.innerHTML;
+
+addTextEditor(fs, function() { canvas1.setShaders(vs, this.value); });
+
+var obj1, obj2;
+
+gl_start(canvas1, vs, fs,
+   function(time) {
+      M.identity(m);
+      M.rotateY(m, time);
+
+      M.save(m);
+         obj1.setMatrix(m);
+      M.restore(m);
+
+      M.save(m);
+         M.rotateX(m, .05);
+         obj2.setMatrix(m);
+      M.restore(m);
+   }
+);
+   var scene = new Scene();
+
+   obj1 = new SceneObject();
+   obj1.setVertices([
+      0.3,.3, 0,  0,0,1,
+       0.3,-.3, 0,  0,0,1,
+       0.3, .3, 0,  0,0,1,
+       0.3, .3, 0,  0,0,1,
+      -0.3, .3, 0,  0,0,1,
+      -0.3,-.3, 0,  0,0,1,
+   ]);
+   scene.addObject(obj1);
+
+   obj2 = new SceneObject();
+   obj2.setVertices([
+      -.2,-.2,-.3,  -1.5,0,1,
+       .4,-.2, .3,  -0.5,0,1,
+       .4, .4, .3,  -0.5,0,1,
+
+       .4, .4, .3,  -0.5,0,1,
+      -.2, .4,-.3,  -1.5,0,1,
+      -.2,-.2,-.3,  -1.5,0,1,
+   ]);
+   //scene.addObject(obj2);
+
+   canvas1.scene = scene;
+
+
+</script>
+

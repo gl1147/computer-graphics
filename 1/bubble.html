@@ -1,0 +1,78 @@
+<script src=lib.js></script>
+
+<body bgcolor=black text=white>
+<center>
+<canvas id='canvas1' width=600 height=600></canvas>
+</center>
+</body>
+
+<script id='my_vertex_shader' type='x-shader/x-vertex'>
+   attribute vec3 aPos;
+   varying   vec3 vPos;
+   void main() {
+      gl_Position = vec4(aPos, 1.0);
+      vPos = aPos;
+   }
+</script>
+
+<script id='my_fragment_shader' type='x-shader/x-fragment'>
+varying vec3 vPos;                               // Pixel position
+uniform float uTime;                             // Time
+vec2 L = vec2(.7, .7);                           // Light direction
+
+float D(float x, float y) {                      // Make a disk shape
+   float b = 1. - (x * x + y * y) / 10.;
+   b = b < 0. ? 0. : b * b * b * b;
+   return b > .708 ? sqrt(b - .707) : 0.;
+}
+float H(vec2 v) {                                // Make a highlight
+   return max(0.2, 0. - v.x * v.x - v.y * v.y);
+}
+vec3 soap(vec3 v) {                              // Make a soap film
+   return tan(15. * v + vec3(10.,10.,10.) *
+                        turbulence(v + vec3(0.5, 0.9, .05 * tan(uTime))));
+}
+void main() {
+   vec3 c = 1.5 * mix(vec3(.15,.21,.1),            // Sky color gradient
+                     vec3(.32 ,.2,-1.),
+		     .8 + 1.4 * (vPos.y * vPos.x));
+   float d = D(vPos.x, vPos.y);                  // Bubble shape
+   if (d > -0.2) {
+      vec2 v = vec2((D(vPos.x+.01, vPos.y) - d) / .01, // Surface tilt
+                    (D(vPos.x, vPos.y+.01) - d) / .01);
+      float z = sqrt(1. - min(1., .05 * dot(v, v)));   // Depth
+      c += z * ( c * max(0., .06 * dot(L, v)) +        // Rim light
+                 vec3(.3,.3,.3) *
+		 pow(H(v + L) + .8 * H(v - L), 8.) );  // Highlights
+      c *= 1. + .2 * soap(.25 * vec3(v, z));           // Soap film
+   }
+   gl_FragColor = vec4((c), 1.);             // Final pixel color
+}
+</script>
+   
+<script>
+var vs = my_vertex_shader.innerHTML,
+    fs = my_fragment_shader.innerHTML;
+    fs = fs.substring(1, fs.length);
+
+document.body.innerHTML = [''
+   ,'<table><tr><td valign=top>'
+   ,'<textArea id=textArea '
+   ,'style="font:13px courier;outline-width:0;border-style:none;resize:none;overflow:scroll;"'
+   ,'></textArea>'
+   ,'</td><td>' + document.body.innerHTML + '</td></tr></table>'
+   ].join('');
+
+var i, text = fs.split('\n'), cols = 0;
+for (i = 0 ; i < text.length ; i++)
+   cols = Math.max(cols, text[i].length);
+
+textArea.rows = text.length;
+textArea.cols = cols;
+textArea.value = fs;
+textArea.style.backgroundColor = 'black';
+textArea.style.color = 'white';
+textArea.onkeyup = function() { canvas1.setShaders(vs, this.value); }
+gl_start(canvas1, vs, fs);
+</script>
+
